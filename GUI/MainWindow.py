@@ -12,7 +12,6 @@ from matplotlib.figure import Figure
 from GUI.ScientificLineEdit import ScientificLineEdit
 from MethodsStrategy.GradientDescentStrategy import GradientDescentStrategy
 from MethodsStrategy.SimplexStrategy import SimplexStrategy
-from Visualization.ContourVisualization import ContourVisualization
 from Visualization.SurfaceVisualization import SurfaceVisualization
 from WorkerCalculations.CalculationWorker import CalculationWorker
 
@@ -77,14 +76,10 @@ class MainWindow(QMainWindow):
             "Градиентный спуск": GradientDescentStrategy()
         }
 
-        self.visualization_strategies = {
-            "3D Поверхность": SurfaceVisualization(),
-            "Контурный график": ContourVisualization()
-        }
-
         # Текущая стратегия по умолчанию
         self.optimization_strategy = None
-        self.current_visualization = "3D Поверхность"
+        self.visualization_strategy = SurfaceVisualization()
+
 
     def _setup_ui(self):
         """Настройка пользовательского интерфейса."""
@@ -136,12 +131,6 @@ class MainWindow(QMainWindow):
         control_layout.addWidget(QLabel("Метод оптимизации:"))
         control_layout.addWidget(self.optimization_combo)
 
-        # Комбобокс выбора типа визуализации
-        self.visualization_combo = QComboBox()
-        self.visualization_combo.addItems(self.visualization_strategies.keys())
-        self.visualization_combo.currentTextChanged.connect(self.update_visualization)
-        control_layout.addWidget(QLabel("Тип графика:"))
-        control_layout.addWidget(self.visualization_combo)
 
     def _setup_history_dock(self):
         """Настройка док-панели для отображения истории оптимизации."""
@@ -213,13 +202,9 @@ class MainWindow(QMainWindow):
     def update_visualization(self):
         """Обновляет график в соответствии с текущими настройками."""
         self.figure.clear()
-        self.current_visualization = self.visualization_combo.currentText()
 
         # Создаем соответствующие оси
-        if self.current_visualization == "3D Поверхность":
-            self.ax = self.figure.add_subplot(111, projection='3d')
-        else:
-            self.ax = self.figure.add_subplot(111)
+        self.ax = self.figure.add_subplot(111, projection='3d')
 
         # Генерация данных для графика
         x = np.linspace(-4, 4, 40)
@@ -228,13 +213,10 @@ class MainWindow(QMainWindow):
         z = self.optimization_strategy.calculate_func(x, y)
 
         # Применение выбранной стратегии визуализации
-        strategy = self.visualization_strategies[self.current_visualization]
-        strategy.plot(self.ax, x, y, z)
+        self.visualization_strategy.plot(self.ax, x, y, z)
+        self.ax.view_init(elev=35, azim=-45)
+        self.ax.dist = 8.5
 
-        # Настройка внешнего вида
-        if self.current_visualization == "3D Поверхность":
-            self.ax.view_init(elev=35, azim=-45)
-            self.ax.dist = 8.5
 
         self.canvas.draw()
 
