@@ -12,35 +12,12 @@ from matplotlib.figure import Figure
 from GUI.ScientificLineEdit import ScientificLineEdit
 from MethodsStrategy.GradientDescentStrategy import GradientDescentStrategy
 from MethodsStrategy.SimplexStrategy import SimplexStrategy
+from TestFunctions.BealeFunction import BealeFunction
+from TestFunctions.SimplexFunction1 import SimplexFunction1
 from Visualization.SurfaceVisualization import SurfaceVisualization
 from WorkerCalculations.CalculationWorker import CalculationWorker
 
-# Настройка бэкенда matplotlib для работы с Qt5
 matplotlib.use('Qt5Agg')
-
-
-def _add_spinbox(layout, label, min_val, max_val, default):
-    """
-    Добавляет спинбокс с меткой в указанный layout.
-
-    Args:
-        layout: QLayout, в который добавляется спинбокс
-        label: Текст метки
-        min_val: Минимальное значение
-        max_val: Максимальное значение
-        default: Значение по умолчанию
-
-    Returns:
-        QSpinBox: Созданный спинбокс
-    """
-    container = QHBoxLayout()
-    container.addWidget(QLabel(label))
-    spin = QSpinBox()
-    spin.setRange(min_val, max_val)
-    spin.setValue(default)
-    container.addWidget(spin)
-    layout.addLayout(container)
-    return spin
 
 
 class MainWindow(QMainWindow):
@@ -60,6 +37,9 @@ class MainWindow(QMainWindow):
         # Инициализация стратегий
         self._init_strategies()
 
+        # Инициализация функций
+        self._update_functions()
+
         # Настройка UI
         self._setup_ui()
 
@@ -72,13 +52,34 @@ class MainWindow(QMainWindow):
     def _init_strategies(self):
         """Инициализация доступных стратегий оптимизации и визуализации."""
         self.optimization_strategies = {
-            "Симплекс-метод": SimplexStrategy(),
-            "Градиентный спуск": GradientDescentStrategy()
+            "Градиентный спуск": GradientDescentStrategy(),
+            "Симплекс-метод": SimplexStrategy()
         }
 
         # Текущая стратегия по умолчанию
-        self.optimization_strategy = None
+        self.optimization_strategy = GradientDescentStrategy()
+
         self.visualization_strategy = SurfaceVisualization()
+
+    def _update_functions(self):
+        """Инициализация доступных функций в зависимости от выбранной стратегии оптимизации."""
+        if isinstance(self.optimization_strategy, GradientDescentStrategy):
+            self.functions = {
+                "Функция Била": BealeFunction()
+            }
+        elif isinstance(self.optimization_strategy, SimplexStrategy):
+            self.functions = {
+                "Тест": SimplexFunction1(),
+                "Функция Била": BealeFunction()
+            }
+        # else:
+        #     # На случай, если добавится новая стратегия
+        #     self.functions = {
+        #
+        #     }
+
+        # Текущая функция по умолчанию
+        self.function = None
 
 
     def _setup_ui(self):
@@ -104,32 +105,56 @@ class MainWindow(QMainWindow):
         ]
 
     def _setup_control_panel(self):
-        """Настройка панели управления с элементами ввода."""
+        """Настройка панели управления с элементами ввода, прижатыми к верху."""
         control_panel = QWidget()
         control_layout = QVBoxLayout(control_panel)
+
+        # Убираем промежутки между элементами и прижимаем к верху
+        control_layout.setSpacing(10)  # Убираем вертикальные отступы между элементами
+
         self.main_layout.addWidget(control_panel, 1)
 
-        # Поля ввода параметров
+        # Поля ввода параметров (без вертикальных отступов)
         self._add_input_field(control_layout, "Шаг обучения (lr):", 'lr', '1e-3')
         self._add_input_field(control_layout, "Точность (tolerance):", 'tolerance', '1e-4')
         self._add_input_field(control_layout, "Нач. точка X:", 'x0', '3.5')
         self._add_input_field(control_layout, "Нач. точка Y:", 'y0', '2.0')
 
         # Спинбоксы для числовых параметров
-        self.iter_spin = _add_spinbox(control_layout, "Макс. итераций:", 1, 10000, 100)
-        self.speed_spin = _add_spinbox(control_layout, "Интервал анимации (мс):", 10, 1000, 50)
+        self.iter_spin = self._add_spinbox(control_layout, "Макс. итераций:", 1, 10000, 100)
+        self.speed_spin = self._add_spinbox(control_layout, "Интервал анимации (мс):", 10, 1000, 50)
+
+        # Горизонтальный контейнер для кнопки и выбора метода
+        hbox = QHBoxLayout()
+        hbox.setSpacing(5)  # Небольшой отступ между кнопкой и комбобоксом
+        hbox.setContentsMargins(0, 0, 0, 0)
 
         # Кнопка запуска оптимизации
-        self.start_btn: QPushButton = QPushButton("Запустить оптимизацию")
+        self.start_btn = QPushButton("Запустить оптимизацию")
         self.start_btn.clicked.connect(self.start_optimization)
-        control_layout.addWidget(self.start_btn)
+        hbox.addWidget(self.start_btn)
 
-        # Комбобокс выбора метода оптимизации
+        # Метка и комбобокс выбора метода оптимизации
+        hbox.addWidget(QLabel("Метод:"))
         self.optimization_combo = QComboBox()
         self.optimization_combo.addItems(self.optimization_strategies.keys())
         self.optimization_combo.currentTextChanged.connect(self._on_optimization_method_changed)
-        control_layout.addWidget(QLabel("Метод оптимизации:"))
-        control_layout.addWidget(self.optimization_combo)
+        hbox.addWidget(self.optimization_combo)
+
+        control_layout.addLayout(hbox)
+
+        func_layout = QHBoxLayout()
+        func_layout.addWidget(QLabel("Функция:"))
+        self.func_combo = QComboBox()
+        self.func_combo.addItems(self.functions.keys())
+        self.func_combo.currentTextChanged.connect(self._on_func_changed)
+        func_layout.addWidget(self.func_combo)
+
+        control_layout.addLayout(func_layout)
+
+
+        # Добавляем растягивающий элемент внизу, чтобы прижать все вверх
+        control_layout.addStretch()
 
 
     def _setup_history_dock(self):
@@ -189,6 +214,17 @@ class MainWindow(QMainWindow):
         container.addWidget(edit)
         layout.addLayout(container)
 
+    def _add_spinbox(self, layout, label, min_val, max_val, default):
+        """Добавление спинбокса."""
+        container = QHBoxLayout()
+        container.addWidget(QLabel(label))
+        spin = QSpinBox()
+        spin.setRange(min_val, max_val)
+        spin.setValue(default)
+        container.addWidget(spin)
+        layout.addLayout(container)
+        return spin
+
     def _on_optimization_method_changed(self, method_name):
         """
         Обработчик изменения метода оптимизации.
@@ -197,6 +233,23 @@ class MainWindow(QMainWindow):
             method_name: Название выбранного метода
         """
         self.optimization_strategy = self.optimization_strategies[method_name]
+        self._update_functions()
+        self.func_combo.blockSignals(True)
+        self.func_combo.clear()        # Очищаем комбобокс
+        self.func_combo.addItems(self.functions.keys()) # Добавляем новые элементы из словаря функций
+        self.func_combo.blockSignals(False)
+        self.func_combo.currentTextChanged.connect(self._on_func_changed)
+        self.update_visualization()
+
+    def _on_func_changed(self, func_name):
+        """
+        Обработчик изменения целевой функции.
+
+        Args:
+            func_name: Название выбранной функции
+        """
+        self.function = self.functions[func_name]
+        self.optimization_strategy.set_func(self.function)
         self.update_visualization()
 
     def update_visualization(self):
