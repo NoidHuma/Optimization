@@ -1,6 +1,6 @@
 import numpy as np
 
-from MethodsStrategy.OptimizationStrategy import OptimizationStrategy
+from OptimizationStrategy.OptimizationStrategy import OptimizationStrategy
 from TestFunctions.BealeFunction import BealeFunction
 
 

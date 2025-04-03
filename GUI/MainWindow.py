@@ -11,11 +11,11 @@ from matplotlib.figure import Figure
 # Локальные импорты
 from GUI.ScientificLineEdit import ScientificLineEdit
 from GUI.ControlPanel import ControlPanel
-from MethodsStrategy.GradientDescentStrategy import GradientDescentStrategy
-from MethodsStrategy.SimplexStrategy import SimplexStrategy
+from OptimizationStrategy.GradientDescentStrategy import GradientDescentStrategy
+from OptimizationStrategy.SimplexStrategy import SimplexStrategy
 from TestFunctions.BealeFunction import BealeFunction
 from TestFunctions.SimplexFunction1 import SimplexFunction1
-from Visualization.SurfaceVisualization import SurfaceVisualization
+from VisualizationStrategy.SurfaceVisualization import SurfaceVisualization
 from WorkerCalculations.CalculationWorker import CalculationWorker
 
 matplotlib.use('Qt5Agg')

@@ -1,4 +1,4 @@
-from Visualization.VisualizationStrategy import VisualizationStrategy
+from VisualizationStrategy.VisualizationStrategy import VisualizationStrategy
 
 
 class SurfaceVisualization(VisualizationStrategy):
