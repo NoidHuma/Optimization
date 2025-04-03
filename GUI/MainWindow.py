@@ -10,6 +10,7 @@ from matplotlib.figure import Figure
 
 # Локальные импорты
 from GUI.ScientificLineEdit import ScientificLineEdit
+from GUI.ControlPanel import ControlPanel
 from MethodsStrategy.GradientDescentStrategy import GradientDescentStrategy
 from MethodsStrategy.SimplexStrategy import SimplexStrategy
 from TestFunctions.BealeFunction import BealeFunction
@@ -106,55 +107,9 @@ class MainWindow(QMainWindow):
 
     def _setup_control_panel(self):
         """Настройка панели управления с элементами ввода, прижатыми к верху."""
-        control_panel = QWidget()
-        control_layout = QVBoxLayout(control_panel)
-
-        # Убираем промежутки между элементами и прижимаем к верху
-        control_layout.setSpacing(10)  # Убираем вертикальные отступы между элементами
-
+        control_panel = ControlPanel()
+        control_panel._update_control_panel(self.optimization_strategy)
         self.main_layout.addWidget(control_panel, 1)
-
-        # Поля ввода параметров (без вертикальных отступов)
-        self._add_input_field(control_layout, "Шаг обучения (lr):", 'lr', '1e-3')
-        self._add_input_field(control_layout, "Точность (tolerance):", 'tolerance', '1e-4')
-        self._add_input_field(control_layout, "Нач. точка X:", 'x0', '3.5')
-        self._add_input_field(control_layout, "Нач. точка Y:", 'y0', '2.0')
-
-        # Спинбоксы для числовых параметров
-        self.iter_spin = self._add_spinbox(control_layout, "Макс. итераций:", 1, 10000, 100)
-        self.speed_spin = self._add_spinbox(control_layout, "Интервал анимации (мс):", 10, 1000, 50)
-
-        # Горизонтальный контейнер для кнопки и выбора метода
-        hbox = QHBoxLayout()
-        hbox.setSpacing(5)  # Небольшой отступ между кнопкой и комбобоксом
-        hbox.setContentsMargins(0, 0, 0, 0)
-
-        # Кнопка запуска оптимизации
-        self.start_btn = QPushButton("Запустить оптимизацию")
-        self.start_btn.clicked.connect(self.start_optimization)
-        hbox.addWidget(self.start_btn)
-
-        # Метка и комбобокс выбора метода оптимизации
-        hbox.addWidget(QLabel("Метод:"))
-        self.optimization_combo = QComboBox()
-        self.optimization_combo.addItems(self.optimization_strategies.keys())
-        self.optimization_combo.currentTextChanged.connect(self._on_optimization_method_changed)
-        hbox.addWidget(self.optimization_combo)
-
-        control_layout.addLayout(hbox)
-
-        func_layout = QHBoxLayout()
-        func_layout.addWidget(QLabel("Функция:"))
-        self.func_combo = QComboBox()
-        self.func_combo.addItems(self.functions.keys())
-        self.func_combo.currentTextChanged.connect(self._on_func_changed)
-        func_layout.addWidget(self.func_combo)
-
-        control_layout.addLayout(func_layout)
-
-
-        # Добавляем растягивающий элемент внизу, чтобы прижать все вверх
-        control_layout.addStretch()
 
 
     def _setup_history_dock(self):
